@@ -6,6 +6,7 @@ const transcriptText = document.getElementById('transcriptText');
 const entryList = document.getElementById('entryList');
 
 const STORAGE_KEY = 'voice-map-entries-v1';
+const WAKE_WORD_REGEX = /\b(hey tracker|ok tracker|hello tracker)\b/i;
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
 let currentCoords = null;
 let hasCenteredOnUser = false;
@@ -115,8 +116,8 @@ function addEntryFromVoice(transcript) {
 
   const parsed = parseCommand(transcript);
   if (!parsed) {
-    setStatus('Could not parse command. Try again.');
-    return;
+    setStatus('Wake word heard, but command was not in expected format.');
+    return false;
   }
 
   const point = currentCoords || map.getCenter();
@@ -137,6 +138,7 @@ function addEntryFromVoice(transcript) {
   } else {
     setStatus(`Saved "${entry.project}" at map center (location permission not granted).`);
   }
+  return true;
 }
 
 function clearAll() {
@@ -158,9 +160,6 @@ function startLocationTracking() {
     (position) => {
       updateCurrentLocationVisual(position);
       locateBtn.disabled = false;
-      if (statusText.textContent === 'Idle' || statusText.textContent.includes('location updated')) {
-        setStatus('Current location updated.');
-      }
     },
     (error) => {
       locateBtn.disabled = true;
@@ -194,50 +193,115 @@ if (!SpeechRecognition) {
   setStatus('Speech recognition is not supported in this browser.');
 } else {
   const recognition = new SpeechRecognition();
-  recognition.continuous = false;
+  recognition.continuous = true;
   recognition.interimResults = false;
   recognition.lang = 'en-US';
 
-  let isListening = false;
+  let isMonitoring = false;
+  let shouldRestart = false;
+  let waitingForCommand = false;
 
-  function startListening() {
+  function setVoiceButtonText() {
+    voiceBtn.textContent = isMonitoring ? '⏹️ Stop Hands-Free' : '🎙️ Enable Hands-Free';
+  }
+
+  function startMonitoring() {
     try {
+      shouldRestart = true;
       recognition.start();
-      setStatus('Listening...');
-      voiceBtn.textContent = '⏹️ Stop Listening';
-      isListening = true;
+      isMonitoring = true;
+      setVoiceButtonText();
+      setStatus('Hands-free active. Say "Hey Tracker" then your location command.');
     } catch {
       setStatus('Mic is busy. Wait and try again.');
     }
   }
 
-  function stopListening() {
+  function stopMonitoring() {
+    shouldRestart = false;
+    waitingForCommand = false;
     recognition.stop();
-    setStatus('Stopping...');
+    setStatus('Hands-free stopped.');
+  }
+
+  function tryHandleWakeFlow(transcript) {
+    transcriptText.textContent = transcript;
+
+    if (waitingForCommand) {
+      waitingForCommand = false;
+      addEntryFromVoice(transcript);
+      return;
+    }
+
+    const wakeMatch = transcript.match(WAKE_WORD_REGEX);
+    if (!wakeMatch) {
+      return;
+    }
+
+    const withoutWakeWord = transcript
+      .replace(WAKE_WORD_REGEX, '')
+      .replace(/^[\s,.:\-–—]+/, '')
+      .trim();
+
+    if (!withoutWakeWord) {
+      waitingForCommand = true;
+      setStatus('Wake word heard. Now say: "Location — project, architect, number"');
+      return;
+    }
+
+    const saved = addEntryFromVoice(withoutWakeWord);
+    if (!saved) {
+      waitingForCommand = true;
+      setStatus('Wake word heard. Please repeat as: "Location — project, architect, number"');
+    }
   }
 
   voiceBtn.addEventListener('click', () => {
-    if (isListening) {
-      stopListening();
+    if (isMonitoring) {
+      stopMonitoring();
     } else {
-      startListening();
+      startMonitoring();
     }
   });
 
   recognition.addEventListener('result', (event) => {
-    const transcript = event.results[0][0].transcript;
-    addEntryFromVoice(transcript);
+    for (let i = event.resultIndex; i < event.results.length; i += 1) {
+      const result = event.results[i];
+      if (result.isFinal) {
+        tryHandleWakeFlow(result[0].transcript);
+      }
+    }
   });
 
   recognition.addEventListener('end', () => {
-    isListening = false;
-    voiceBtn.textContent = '🎙️ Start Voice Input';
-    if (statusText.textContent === 'Listening...' || statusText.textContent === 'Stopping...') {
-      setStatus('Idle');
+    isMonitoring = false;
+    setVoiceButtonText();
+
+    if (shouldRestart) {
+      try {
+        recognition.start();
+        isMonitoring = true;
+        setVoiceButtonText();
+      } catch {
+        shouldRestart = false;
+        setStatus('Could not restart hands-free mode. Tap enable again.');
+      }
     }
   });
 
   recognition.addEventListener('error', (event) => {
-    setStatus(`Voice error: ${event.error}`);
+    if (event.error === 'not-allowed') {
+      shouldRestart = false;
+      isMonitoring = false;
+      setVoiceButtonText();
+      setStatus('Microphone permission denied. Please allow mic and try again.');
+      return;
+    }
+
+    if (event.error !== 'no-speech') {
+      setStatus(`Voice error: ${event.error}`);
+    }
   });
+
+  setVoiceButtonText();
 }
