@@ -6,18 +6,39 @@ A lightweight voice-first map logger for travel notes.
 
 - Uses your current GPS location (like Google Maps "my location").
 - Supports true hands-free capture for travel use.
-- Saves spoken context (for example: `hotel project, X architect, 12345 number`) directly to that location.
+- Saves spoken context directly to that location.
+- Stores when each note was recorded (date + time).
+- Exports data for Excel with date, time, coordinates, and comments.
 - Persists entries in browser local storage.
 
 ## Voice flow (hands-free)
 
 1. Tap **Enable Hands-Free** once.
 2. Talk naturally at each stop (no trigger phrase required).
-3. Each finalized speech segment is saved as a location note.
+3. Each finalized speech segment is saved as a location note with timestamp.
 
-## Why you hear beeps
+## Export to Excel
 
-Some browsers/phones play a system tone whenever speech recognition starts listening again. This tone is browser/OS-controlled and cannot be fully disabled from JavaScript. The app now adds a short restart delay to reduce frequent beeping.
+Tap **Export Excel (CSV)** to download a `.csv` file that opens in Excel.
+Columns included:
+
+- `date`
+- `time`
+- `timestamp_iso`
+- `latitude`
+- `longitude`
+- `project`
+- `comments`
+
+## About beeps
+
+Some browsers/phones play a system tone whenever speech recognition starts listening again. This tone is browser/OS-controlled and cannot be fully disabled from JavaScript. The app uses a short restart delay to reduce frequent beeps.
+
+## Important mobile limitation (screen off / phone locked)
+
+Browser speech recognition generally **does not keep running reliably in the background when the phone screen is off or the phone is locked**. This is an OS/browser restriction for web apps.
+
+For true locked-screen/background recording, you would need a native mobile app (Android/iOS) with background audio/location permissions.
 
 ## Run locally
 

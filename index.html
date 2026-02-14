@@ -25,6 +25,7 @@
         <div class="controls">
           <button id="voiceBtn" type="button">🎙️ Enable Hands-Free</button>
           <button id="locateBtn" type="button" class="secondary">📍 Center on Me</button>
+          <button id="exportBtn" type="button" class="secondary">⬇️ Export Excel (CSV)</button>
           <button id="clearBtn" type="button" class="secondary">Clear All</button>
         </div>
 
@@ -32,6 +33,7 @@
           <p><strong>Status:</strong> <span id="statusText">Idle</span></p>
           <p><strong>Last heard:</strong> <span id="transcriptText">—</span></p>
           <p class="hint">Everything you say in hands-free mode is saved at your current GPS location.</p>
+          <p class="hint">Recorded notes include date, time, coordinates, and comments.</p>
         </div>
 
         <ul id="entryList" class="entry-list"></ul>

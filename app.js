@@ -1,6 +1,7 @@
 const voiceBtn = document.getElementById('voiceBtn');
 const clearBtn = document.getElementById('clearBtn');
 const locateBtn = document.getElementById('locateBtn');
+const exportBtn = document.getElementById('exportBtn');
 const statusText = document.getElementById('statusText');
 const transcriptText = document.getElementById('transcriptText');
 const entryList = document.getElementById('entryList');
@@ -26,6 +27,15 @@ function setStatus(text) {
 
 function saveEntries() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+
+function formatDateTime(ts) {
+  const d = new Date(ts);
+  return {
+    date: d.toLocaleDateString(),
+    time: d.toLocaleTimeString(),
+    iso: d.toISOString()
+  };
 }
 
 function parseCommand(rawCommand) {
@@ -54,9 +64,11 @@ function renderEntryList() {
   const sorted = [...entries].reverse();
   sorted.forEach((entry) => {
     const item = document.createElement('li');
+    const formatted = formatDateTime(entry.createdAt);
     item.innerHTML = `
       <strong>${entry.project}</strong><br />
       ${entry.details.length ? `${entry.details.join(' • ')}<br />` : ''}
+      <small>${formatted.date} ${formatted.time}</small><br />
       <small>${entry.lat.toFixed(5)}, ${entry.lng.toFixed(5)}</small>
     `;
     entryList.appendChild(item);
@@ -68,10 +80,13 @@ function renderMarkers() {
 
   entries.forEach((entry) => {
     const detailsHtml = entry.details.map((d) => `<li>${d}</li>`).join('');
+    const formatted = formatDateTime(entry.createdAt);
     L.marker([entry.lat, entry.lng])
       .bindPopup(`
         <strong>${entry.project}</strong>
         ${detailsHtml ? `<ul>${detailsHtml}</ul>` : ''}
+        <small>${formatted.date} ${formatted.time}</small><br />
+        <small>${entry.lat.toFixed(6)}, ${entry.lng.toFixed(6)}</small><br />
         <small>${entry.raw}</small>
       `)
       .addTo(markers);
@@ -132,10 +147,11 @@ function addEntryFromVoice(transcript) {
   renderMarkers();
   renderEntryList();
 
+  const formatted = formatDateTime(entry.createdAt);
   if (currentCoords) {
-    setStatus(`Saved "${entry.project}" at your current location.`);
+    setStatus(`Saved at ${formatted.time} (${formatted.date}) at your current location.`);
   } else {
-    setStatus(`Saved "${entry.project}" at map center (location permission not granted).`);
+    setStatus(`Saved at ${formatted.time} (${formatted.date}) at map center.`);
   }
 }
 
@@ -145,6 +161,51 @@ function clearAll() {
   renderMarkers();
   renderEntryList();
   setStatus('All saved locations were cleared.');
+}
+
+function csvEscape(value) {
+  const stringValue = String(value ?? '');
+  if (/[",\n]/.test(stringValue)) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
+function exportEntriesToCsv() {
+  if (!entries.length) {
+    setStatus('No entries to export yet.');
+    return;
+  }
+
+  const header = ['date', 'time', 'timestamp_iso', 'latitude', 'longitude', 'project', 'comments'];
+  const rows = entries.map((entry) => {
+    const formatted = formatDateTime(entry.createdAt);
+    return [
+      formatted.date,
+      formatted.time,
+      formatted.iso,
+      entry.lat,
+      entry.lng,
+      entry.project,
+      entry.raw
+    ];
+  });
+
+  const csv = [header, ...rows]
+    .map((row) => row.map(csvEscape).join(','))
+    .join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  link.href = url;
+  link.download = `voice-location-export-${stamp}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  setStatus('Exported CSV (open directly in Excel).');
 }
 
 function startLocationTracking() {
@@ -181,6 +242,7 @@ locateBtn.addEventListener('click', () => {
 });
 
 clearBtn.addEventListener('click', clearAll);
+exportBtn.addEventListener('click', exportEntriesToCsv);
 renderMarkers();
 renderEntryList();
 startLocationTracking();
