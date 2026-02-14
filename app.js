@@ -1,11 +1,14 @@
 const voiceBtn = document.getElementById('voiceBtn');
 const clearBtn = document.getElementById('clearBtn');
+const locateBtn = document.getElementById('locateBtn');
 const statusText = document.getElementById('statusText');
 const transcriptText = document.getElementById('transcriptText');
 const entryList = document.getElementById('entryList');
 
 const STORAGE_KEY = 'voice-map-entries-v1';
 let entries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let currentCoords = null;
+let hasCenteredOnUser = false;
 
 const map = L.map('map').setView([40.7128, -74.006], 11);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -14,6 +17,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const markers = L.layerGroup().addTo(map);
+let currentLocationMarker = null;
+let currentLocationAccuracy = null;
 
 function setStatus(text) {
   statusText.textContent = text;
@@ -73,6 +78,38 @@ function renderMarkers() {
   });
 }
 
+function updateCurrentLocationVisual(position) {
+  const { latitude, longitude, accuracy } = position.coords;
+  currentCoords = { lat: latitude, lng: longitude, accuracy };
+
+  if (currentLocationMarker) {
+    currentLocationMarker.setLatLng([latitude, longitude]);
+    currentLocationAccuracy.setLatLng([latitude, longitude]);
+    currentLocationAccuracy.setRadius(accuracy);
+  } else {
+    currentLocationMarker = L.circleMarker([latitude, longitude], {
+      radius: 8,
+      color: '#1d63ff',
+      weight: 2,
+      fillColor: '#5f97ff',
+      fillOpacity: 0.9
+    }).addTo(map).bindPopup('Current location');
+
+    currentLocationAccuracy = L.circle([latitude, longitude], {
+      radius: accuracy,
+      color: '#5f97ff',
+      fillColor: '#8fb5ff',
+      fillOpacity: 0.2,
+      weight: 1
+    }).addTo(map);
+  }
+
+  if (!hasCenteredOnUser) {
+    map.setView([latitude, longitude], 16);
+    hasCenteredOnUser = true;
+  }
+}
+
 function addEntryFromVoice(transcript) {
   transcriptText.textContent = transcript;
 
@@ -82,11 +119,11 @@ function addEntryFromVoice(transcript) {
     return;
   }
 
-  const center = map.getCenter();
+  const point = currentCoords || map.getCenter();
   const entry = {
     ...parsed,
-    lat: center.lat,
-    lng: center.lng,
+    lat: point.lat,
+    lng: point.lng,
     createdAt: Date.now()
   };
 
@@ -94,7 +131,12 @@ function addEntryFromVoice(transcript) {
   saveEntries();
   renderMarkers();
   renderEntryList();
-  setStatus(`Saved "${entry.project}" at map center.`);
+
+  if (currentCoords) {
+    setStatus(`Saved "${entry.project}" at your current location.`);
+  } else {
+    setStatus(`Saved "${entry.project}" at map center (location permission not granted).`);
+  }
 }
 
 function clearAll() {
@@ -105,9 +147,46 @@ function clearAll() {
   setStatus('All saved locations were cleared.');
 }
 
+function startLocationTracking() {
+  if (!navigator.geolocation) {
+    setStatus('Geolocation is not supported in this browser.');
+    locateBtn.disabled = true;
+    return;
+  }
+
+  navigator.geolocation.watchPosition(
+    (position) => {
+      updateCurrentLocationVisual(position);
+      locateBtn.disabled = false;
+      if (statusText.textContent === 'Idle' || statusText.textContent.includes('location updated')) {
+        setStatus('Current location updated.');
+      }
+    },
+    (error) => {
+      locateBtn.disabled = true;
+      setStatus(`Location unavailable: ${error.message}`);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 5000
+    }
+  );
+}
+
+locateBtn.addEventListener('click', () => {
+  if (!currentCoords) {
+    setStatus('Current location not ready yet.');
+    return;
+  }
+  map.setView([currentCoords.lat, currentCoords.lng], 16);
+  setStatus('Map centered on your current location.');
+});
+
 clearBtn.addEventListener('click', clearAll);
 renderMarkers();
 renderEntryList();
+startLocationTracking();
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (!SpeechRecognition) {

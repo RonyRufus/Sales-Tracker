@@ -32,6 +32,7 @@ body {
 
 .controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.6rem;
   margin: 1rem 0;
 }
@@ -91,44 +92,9 @@ button:disabled {
   color: #5c6788;
 }
 
-.map-wrap {
-  position: relative;
-}
-
 #map {
   height: 100vh;
   width: 100%;
-}
-
-.crosshair {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 24px;
-  height: 24px;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.crosshair::before,
-.crosshair::after {
-  content: "";
-  position: absolute;
-  background: #ff2f4a;
-}
-
-.crosshair::before {
-  width: 2px;
-  height: 24px;
-  left: 11px;
-  top: 0;
-}
-
-.crosshair::after {
-  width: 24px;
-  height: 2px;
-  left: 0;
-  top: 11px;
 }
 
 @media (max-width: 900px) {

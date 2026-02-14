@@ -17,19 +17,20 @@
       <aside class="panel">
         <h1>Voice Location Logger</h1>
         <p>
-          Pan/zoom to a point, then speak a quick command like:<br />
+          Speak a quick command like:<br />
           <strong>"Location — hotel project, X architect, 12345 number"</strong>
         </p>
 
         <div class="controls">
           <button id="voiceBtn" type="button">🎙️ Start Voice Input</button>
+          <button id="locateBtn" type="button" class="secondary">📍 Center on Me</button>
           <button id="clearBtn" type="button" class="secondary">Clear All</button>
         </div>
 
         <div class="status">
           <p><strong>Status:</strong> <span id="statusText">Idle</span></p>
           <p><strong>Last heard:</strong> <span id="transcriptText">—</span></p>
-          <p class="hint">Tip: saved entries are pinned at the map crosshair position.</p>
+          <p class="hint">Entries are pinned to your current device location (GPS).</p>
         </div>
 
         <ul id="entryList" class="entry-list"></ul>
@@ -37,7 +38,6 @@
 
       <main class="map-wrap">
         <div id="map"></div>
-        <div class="crosshair" aria-hidden="true"></div>
       </main>
     </div>
 
