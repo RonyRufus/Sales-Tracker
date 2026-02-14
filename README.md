@@ -5,19 +5,19 @@ A lightweight voice-first map logger for travel notes.
 ## What it does
 
 - Uses your current GPS location (like Google Maps "my location").
-- Supports a hands-free wake-word flow for travel use.
-- Saves spoken context (for example: `Location — hotel project, X architect, 12345 number`) directly to that location.
+- Supports true hands-free capture for travel use.
+- Saves spoken context (for example: `hotel project, X architect, 12345 number`) directly to that location.
 - Persists entries in browser local storage.
 
 ## Voice flow (hands-free)
 
 1. Tap **Enable Hands-Free** once.
-2. Say **"Hey Tracker"** (or "OK Tracker").
-3. Say your command:
-   - `Location — hotel project, X architect, 12345 number`
+2. Talk naturally at each stop (no trigger phrase required).
+3. Each finalized speech segment is saved as a location note.
 
-You can also say it in one line:
-- `Hey Tracker, Location — hotel project, X architect, 12345 number`
+## Why you hear beeps
+
+Some browsers/phones play a system tone whenever speech recognition starts listening again. This tone is browser/OS-controlled and cannot be fully disabled from JavaScript. The app now adds a short restart delay to reduce frequent beeping.
 
 ## Run locally
 
