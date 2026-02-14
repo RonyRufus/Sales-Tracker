@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Location Logger</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="panel">
+        <h1>Voice Location Logger</h1>
+        <p>
+          Hands-free flow:<br />
+          <strong>Tap “Enable Hands-Free” once</strong><br />
+          then just speak naturally at each location.
+        </p>
+
+        <div class="controls">
+          <button id="voiceBtn" type="button">🎙️ Enable Hands-Free</button>
+          <button id="locateBtn" type="button" class="secondary">📍 Center on Me</button>
+          <button id="exportBtn" type="button" class="secondary">⬇️ Export Excel (CSV)</button>
+          <button id="clearBtn" type="button" class="secondary">Clear All</button>
+        </div>
+
+        <div class="status">
+          <p><strong>Status:</strong> <span id="statusText">Idle</span></p>
+          <p><strong>Last heard:</strong> <span id="transcriptText">—</span></p>
+          <p class="hint">Everything you say in hands-free mode is saved at your current GPS location.</p>
+          <p class="hint">Recorded notes include date, time, coordinates, and comments.</p>
+        </div>
+
+        <ul id="entryList" class="entry-list"></ul>
+      </aside>
+
+      <main class="map-wrap">
+        <div id="map"></div>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script src="app.js"></script>
+  </body>
+</html>
