@@ -1,0 +1,8 @@
+# Existing project ignores
+
+# Android project
+android-app/.gradle/
+android-app/build/
+android-app/app/build/
+android-app/local.properties
+*.iml

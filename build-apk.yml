@@ -18,11 +18,15 @@ jobs:
         distro: temurin
         java-version: '17'
 
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v3
+
     - name: Build debug APK
-      run: ./gradlew assembleDebug
+      run: cd android-app && gradle assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
         name: android-debug-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: android-app/app/build/outputs/apk/debug/app-debug.apk

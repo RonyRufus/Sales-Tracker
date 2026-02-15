@@ -40,6 +40,31 @@ Browser speech recognition generally **does not keep running reliably in the bac
 
 For true locked-screen/background recording, you would need a native mobile app (Android/iOS) with background audio/location permissions.
 
+
+## Native app migration
+
+If you want this as a true mobile app (not browser runtime behavior), use the Android blueprint in `ANDROID_APP_BLUEPRINT.md`.
+
+
+## Native Android app (real app)
+
+A native Android implementation now lives in `android-app/`.
+
+### Open in Android Studio
+
+1. Open Android Studio.
+2. Choose **Open** and select `android-app/`.
+3. Let Gradle sync.
+4. Run on a device (Android 8+ recommended).
+
+### Features included in the Android app
+
+- Compose UI for start/stop capture, manual entry, and entry history.
+- Room database persistence.
+- Foreground `CaptureService` for hands-free speech loop.
+- Fused Location integration for entry geotagging.
+- CSV export via Android share sheet.
+
 ## Run locally
 
 Because this app uses browser speech + location APIs, serve it over HTTP:
